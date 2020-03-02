@@ -15,12 +15,12 @@ DefaultConfig = {
     "RedisPort" : 6379,
     "RedisDb" : 0,
     #Server Settings
-    "ServerName" : "RealistikOsu!",
-    "ServerURL" : "https://ussr.pl/",
-    "LetsAPI" : "https://old.ussr.pl/letsapi/",
-    "AvatarServer" : "https://a.ussr.pl/",
-    "BanchoURL" : "https://c.ussr.pl/",
-    "BeatmapMirror" : "http://storage.ripple.moe/",
+    "ServerName" : "osu!Shibui",
+    "ServerURL" : "https://shibui.pw/",
+    "LetsAPI" : "http://127.0.0.1:5002/letsapi",
+    "AvatarServer" : "https://a.shibui.pw/",
+    "BanchoURL" : "https://c.shibui.pw//",
+    "BeatmapMirror" : "http://storage.kurikku.pw/",
     "HasRelax" : True,
     "Webhook" : "", #Discord webhook for posting newly ranked maps
     #Recaptcha v2 for the login page
