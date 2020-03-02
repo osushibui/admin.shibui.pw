@@ -49,16 +49,9 @@ def DashData():
     """Grabs all the values for the dashboard."""
     mycursor.execute("SELECT value_string FROM system_settings WHERE name = 'website_global_alert'")
     Alert = mycursor.fetchall()[0][0]
-    if Alert == "": #checks if no aler
+    if Alert == "": #checks if no alert
         Alert = False
-    response = {
-        "RegisteredUsers" : r.get("ripple:registered_users").decode("utf-8") ,
-        "OnlineUsers" : r.get("ripple:online_users").decode("utf-8") ,
-        "TotalPP" : r.get("ripple:total_pp").decode("utf-8") ,
-        "Alert" : Alert
-    }
-    return response
-
+                 
 def LoginHandler(username, password):
     """Checks the passwords and handles the sessions."""
     mycursor.execute(f"SELECT username, password_md5, ban_datetime, privileges, id FROM users WHERE username_safe = '{username.lower()}'")
