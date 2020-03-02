@@ -5,4 +5,3 @@ redis
 bcrypt
 discord-webhook
 flask-recaptcha
-python3-pip
