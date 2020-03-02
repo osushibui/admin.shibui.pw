@@ -1,6 +1,7 @@
 # Shibui Panel
 The modern Ripple Admin Panel replacement made in Python. It's goal is to be a modern, fast and functional admin panel for osu! private servers.
 DISCLAIMER: WE TAKE NO CREDIT FOR THIS CODE. ALL RIGHTS GO TO REALISTIKOSU + REALISTIKDASH.
+DONT USE THIS AS A TOTAL REPLACEMENT FOR ADMIN PANEL AS IT ISNT FULLY MADE AND HAS A LOT OF FIXING AND ADDING STUFF TO DO
 
 ![Beta picture](https://i.imgur.com/dmu0bpv.png)
 
