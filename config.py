@@ -51,7 +51,7 @@ UserConfig = JsonFile.GetDict("config.json")
 if UserConfig == {}:
     print(Fore.YELLOW+" No config found! Generating!"+Fore.RESET)
     JsonFile.SaveDict(DefaultConfig, "config.json")
-    print(Fore.WHITE+" Config created! It is named config.json. Edit it accordingly and start RealistikPanel again!")
+    print(Fore.WHITE+" Config created! It is named config.json. Edit it accordingly and start Shibui Panel again.")
     exit()
 else:
     #config check and updater
@@ -70,7 +70,7 @@ else:
         for Key in NeedSet:
             UserConfig[Key] = DefaultConfig[Key]
             print(Fore.BLUE+f" Option {Key} added to config. Set default to '{DefaultConfig[Key]}'." + Fore.RESET)
-        print(Fore.GREEN+" Config updated! Please edit the new values to your liking." + Fore.RESET)
+        print(Fore.GREEN+" Config updated. Please edit the new values to your liking." + Fore.RESET)
         JsonFile.SaveDict(UserConfig, "config.json")
         exit()
         
