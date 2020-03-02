@@ -13,12 +13,12 @@ import json
 
 init() #initialises colourama for colours
 
-print(f"""{Fore.BLUE}  _____            _ _     _   _ _    _____                 _ _ 
- |  __ \          | (_)   | | (_) |  |  __ \               | | |
- | |__) |___  __ _| |_ ___| |_ _| | _| |__) |_ _ _ __   ___| | |
- |  _  // _ \/ _` | | / __| __| | |/ /  ___/ _` | '_ \ / _ \ | |
- | | \ \  __/ (_| | | \__ \ |_| |   <| |  | (_| | | | |  __/ |_|
- |_|  \_\___|\__,_|_|_|___/\__|_|_|\_\_|   \__,_|_| |_|\___|_(_)
+print(f"""{Fore.BLUE}_____ _     _ _           _   _____                 _ 
+ / ____| |   (_) |         (_) |  __ \               | |
+| (___ | |__  _| |__  _   _ _  | |__) |_ _ _ __   ___| |
+ \___ \| '_ \| | '_ \| | | | | |  ___/ _` | '_ \ / _ \ |
+ ____) | | | | | |_) | |_| | | | |  | (_| | | | |  __/ |
+|_____/|_| |_|_|_.__/ \__,_|_| |_|   \__,_|_| |_|\___|_|
  ---------------------------------------------------------------
 {Fore.RESET}""")
 
@@ -28,27 +28,27 @@ try:
         user=UserConfig["SQLUser"],
         passwd=UserConfig["SQLPassword"]
     ) #connects to database
-    print(f"{Fore.GREEN} Successfully connected to MySQL!")
+    print(f"{Fore.GREEN} Successfully connected to MySQL")
 except Exception as e:
-    print(f"{Fore.RED} Failed connecting to MySQL! Abandoning!\n Error: {e}{Fore.RESET}")
+    print(f"{Fore.RED} Failed connecting to MySQL. Abandoning\n Error: {e}{Fore.RESET}")
     exit()
 
 try:
     r = redis.Redis(host=UserConfig["RedisHost"], port=UserConfig["RedisPort"], db=UserConfig["RedisDb"]) #establishes redis connection
     print(f"{Fore.GREEN} Successfully connected to Redis!")
 except Exception as e:
-    print(f"{Fore.RED} Failed connecting to Redis! Abandoning!\n Error: {e}{Fore.RESET}")
+    print(f"{Fore.RED} Failed connecting to Redis. Abandoning\n Error: {e}{Fore.RESET}")
     exit()
 
 mycursor = mydb.cursor() #creates a thing to allow us to run mysql commands
-mycursor.execute(f"USE {UserConfig['SQLDatabase']}") #Sets the db to ripple
+mycursor.execute(f"USE {UserConfig['SQLDatabase']}")
 
 
 def DashData():
     #note to self: add data caching so data isnt grabbed every time the dash is accessed
     """Grabs all the values for the dashboard."""
     mycursor.execute("SELECT value_string FROM system_settings WHERE name = 'website_global_alert'")
-    Alert = mycursor.fetchall()[0][0] #Not the best way but it's fast!!
+    Alert = mycursor.fetchall()[0][0]
     if Alert == "": #checks if no aler
         Alert = False
     response = {
@@ -87,14 +87,14 @@ def LoginHandler(username, password):
         else:
             if HasPrivilege(id):
                 if checkpw(PassHash, password):
-                    return [True, "You have been logged in!", { #creating session
+                    return [True, "Authenticated.", { #creating session
                         "LoggedIn" : True,
                         "AccountId" : id,
                         "AccountName" : Username,
                         "Privilege" : Privilege
                     }]
                 else:
-                     return [False, "Incorrect password"]
+                     return [False, "Incorrect password."]
             else:
                 return [False, "Missing privileges!"]
 
@@ -225,7 +225,7 @@ def GetBmapInfo(id):
                 "Difficulty" : "0",
                 "BeatmapsetId" : "",
                 "BeatmapId" : 0,
-                "Cover" : "https://a.ussr.pl/" #why this? idk
+                "Cover" : "https://a.shibui.pw/" #why this? idk
             }]
     else:
         BMSID = Data[0][0]
@@ -337,24 +337,11 @@ def Webhook(BeatmapId, ActionName, session):
         TitleText = "ranked!"
     if ActionName == 5:
         TitleText = "loved!"
-    webhook = DiscordWebhook(url=URL) #creates webhook
-    # me trying to learn the webhook
-    #EmbedJson = { #json to be sent to webhook
-    #    "image" : f"https://assets.ppy.sh/beatmaps/{mapa[1]}/covers/cover.jpg",
-    #    "author" : {
-    #        "icon_url" : f"https://a.ussr.pl/{session['AccountId']}",
-    #        "url" : f"https://ussr.pl/b/{BeatmapId}",
-    #        "name" : f"{mapa[0]} was just {TitleText}"
-    #    },
-    #    "description" : f"Ranked by {session['AccountName']}",
-    #    "footer" : {
-    #        "text" : "via RealistikPanel!"
-    #    }
-    #}
-    #requests.post(URL, data=EmbedJson, headers=headers) #sends the webhook data
+    webhook = DiscordWebhook(url=URL)
+                 
     embed = DiscordEmbed(description=f"Ranked by {session['AccountName']}", color=242424) #this is giving me discord.py vibes
-    embed.set_author(name=f"{mapa[0]} was just {TitleText}", url=f"https://ussr.pl/b/{BeatmapId}", icon_url=f"https://a.ussr.pl/{session['AccountId']}")
-    embed.set_footer(text="via RealistikPanel!")
+    embed.set_author(name=f"{mapa[0]} was just {TitleText}", url=f"https://shibui.pw/b/{BeatmapId}", icon_url=f"https://a.shibui.pw/{session['AccountId']}")
+    embed.set_footer(text="via Shibui Panel")
     embed.set_image(url=f"https://assets.ppy.sh/beatmaps/{mapa[1]}/covers/cover.jpg")
     webhook.add_embed(embed)
     print(" * Posting webhook!")
@@ -365,7 +352,7 @@ def RAPLog(UserID=999, Text="forgot to assign a text value :/"):
     """Logs to the RAP log."""
     Timestamp = round(time.time())
     #now we putting that in oh yea
-    mycursor.execute(f"INSERT INTO rap_logs (userid, text, datetime, through) VALUES ({UserID}, '{Text}', {Timestamp}, 'RealistikPanel!')")
+    mycursor.execute(f"INSERT INTO rap_logs (userid, text, datetime, through) VALUES ({UserID}, '{Text}', {Timestamp}, 'Shibui Panel')")
     mydb.commit()
 
 def checkpw(dbpassword, painpassword):
