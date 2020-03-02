@@ -2,7 +2,7 @@
 
 {% block content %}
 <h2 class="section-title">System Settings</h2>
-<p class="section-lead">Change the settings of your osu! server stack.</p>
+<p class="section-lead">Configure the server.</p>
 <div class="card">
     <div class="card-header">
         <h4>Settings</h4>
@@ -10,7 +10,7 @@
     <div class="card-body">
         <form action="/system/settings" method="post">
             <div class="form-group">
-                <label>Maintenance Mode (website)</label>
+                <label>Website Maintenance</label>
                 <select class="form-control" name="webman">
                     {% if SysData['webman'] %}
                     <option selected>On</option>
@@ -22,7 +22,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Maintenance Mode (in-game)</label>
+                <label>In-game Maintenance</label>
                 <select class="form-control" name="gameman">
                     {% if SysData['gameman'] %}
                     <option selected>On</option>
@@ -34,7 +34,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Registration</label>
+                <label>Account Creation</label>
                 <select class="form-control" name="register">
                     {% if SysData['register'] %}
                     <option selected>On</option>
@@ -57,7 +57,7 @@
         </form>
     </div>
     <div class="card-footer">
-        RealistikPanel!
+        Shibui Panel
     </div>
 </div>
 {% endblock %}
