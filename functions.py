@@ -69,7 +69,7 @@ def LoginHandler(username, password):
         id = User = User[4]
         
         #Converts IsBanned to bool
-        if IsBanned == "0":
+        if IsBanned == "0" or not IsBanned:
             IsBanned = False
         else:
             IsBanned = True
@@ -80,14 +80,15 @@ def LoginHandler(username, password):
         else:
             if HasPrivilege(id):
                 if checkpw(PassHash, password):
-                    return [True, "Authenticated.", { #creating session
+                    return [True, "You have been logged in!", { #creating session
                         "LoggedIn" : True,
                         "AccountId" : id,
                         "AccountName" : Username,
-                        "Privilege" : Privilege
+                        "Privilege" : Privilege,
+                        "exp" : datetime.datetime.utcnow() + datetime.timedelta(hours=2) #so the token expires
                     }]
                 else:
-                     return [False, "Incorrect password."]
+                     return [False, "Incorrect password"]
             else:
                 return [False, "Missing privileges!"]
 
@@ -246,12 +247,15 @@ def GetBmapInfo(id):
 
 def HasPrivilege(UserID, ReqPriv = 2):
     """Check if the person trying to access the page has perms to do it."""
-    #0 = no verification
-    #1 = Only registration required
-    #2 = RAP Access Required
-    #3 = Manage beatmaps required
-    #4 = manage settings required
-    #5 = Ban users required
+    # 0 = no verification
+    # 1 = Only registration required
+    # 2 = RAP Access Required
+    # 3 = Manage beatmaps required
+    # 4 = manage settings required
+    # 5 = Ban users required
+    # 6 = Manage users required
+    # 7 = View logs
+
     #THIS TOOK ME SO LONG TO FIGURE OUT WTF
     NoPriv = 0
     UserNormal = 2 << 0
@@ -264,6 +268,18 @@ def HasPrivilege(UserID, ReqPriv = 2):
     ManageServers = 2 << 8
     ManageSettings = 2 << 9
     ManageBetaKeys = 2 << 10
+    ManageReports = 2 << 11
+    ManageDocs = 2 << 12
+    ManageBadges = 2 << 13
+    ViewRAPLogs	= 2 << 14
+    ManagePrivileges = 2 << 15
+    SendAlerts = 2 << 16
+    ChatMod	 = 2 << 17
+    KickUsers = 2 << 18
+    PendingVerification = 2 << 19
+    TournamentStaff  = 2 << 20
+    Caker = 2 << 21
+    ViewTopScores = 2 << 22
 
     if ReqPriv == 0: #dont use this like at all
         return True
@@ -285,6 +301,16 @@ def HasPrivilege(UserID, ReqPriv = 2):
         result = Privilege & ManageSettings
     elif ReqPriv == 5:
         result = Privilege & BanUsers
+    elif ReqPriv == 6:
+        result = Privilege & ManageUsers
+    elif ReqPriv == 7:
+        result = Privilege & ViewRAPLogs
+    elif ReqPriv == 8:
+        result == Privilege & RPNominate
+    elif ReqPriv == 9:
+        result == Privilege & RPNominateAccept
+    elif ReqPriv == 10:
+        result == Privilege & RPOverwatch
     
     if result > 1:
         return True
@@ -330,8 +356,21 @@ def Webhook(BeatmapId, ActionName, session):
         TitleText = "ranked!"
     if ActionName == 5:
         TitleText = "loved!"
-    webhook = DiscordWebhook(url=URL)
-                 
+    webhook = DiscordWebhook(url=URL) #creates webhook
+    # me trying to learn the webhook
+    #EmbedJson = { #json to be sent to webhook
+    #    "image" : f"https://assets.ppy.sh/beatmaps/{mapa[1]}/covers/cover.jpg",
+    #    "author" : {
+    #        "icon_url" : f"https://a.ussr.pl/{session['AccountId']}",
+    #        "url" : f"https://ussr.pl/b/{BeatmapId}",
+    #        "name" : f"{mapa[0]} was just {TitleText}"
+    #    },
+    #    "description" : f"Ranked by {session['AccountName']}",
+    #    "footer" : {
+    #        "text" : "via RealistikPanel!"
+    #    }
+    #}
+    #requests.post(URL, data=EmbedJson, headers=headers) #sends the webhook data
     embed = DiscordEmbed(description=f"Ranked by {session['AccountName']}", color=242424) #this is giving me discord.py vibes
     embed.set_author(name=f"{mapa[0]} was just {TitleText}", url=f"https://shibui.pw/b/{BeatmapId}", icon_url=f"https://a.shibui.pw/{session['AccountId']}")
     embed.set_footer(text="via Shibui Panel")
@@ -419,3 +458,162 @@ def CalcPP(BmapID):
     """Sends request to letsapi to calc PP for beatmap id."""
     reqjson = requests.get(url=f"{UserConfig['LetsAPI']}v1/pp?b={BmapID}").json()
     return round(reqjson["pp"][0], 2)
+
+def Unique(Alist):
+    """Returns list of unique elements of list."""
+    Uniques = []
+    for x in Alist:
+        if x not in Uniques:
+            Uniques.append(x)
+    return Uniques
+
+def FetchUsers(page = 0):
+    """Fetches users for the users page."""
+    #This is going to need a lot of patching up i can feel it
+    Offset = UserConfig["PageSize"] * page #for the page system to work
+    mycursor.execute(f"SELECT id, username, privileges, allowed FROM users LIMIT {UserConfig['PageSize']} OFFSET {Offset}")
+    People = mycursor.fetchall()
+
+    #gets list of all different privileges so an sql select call isnt ran per person
+    AllPrivileges = []
+    for person in People:
+        AllPrivileges.append(person[2])
+    UniquePrivileges = Unique(AllPrivileges)
+
+    #How the privilege data will look
+    #PrivilegeDict = {
+    #    "234543": {
+    #        "Name" : "Owner",
+    #        "Privileges" : 234543,
+    #        "Colour" : "success"
+    #    }
+    #}
+    PrivilegeDict = {}
+    #gets all priv info
+    for Priv in UniquePrivileges:
+        mycursor.execute(f"SELECT name, color FROM privileges_groups WHERE privileges = {Priv} LIMIT 1")
+        info = mycursor.fetchall()
+        if len(info) == 0:
+            PrivilegeDict[str(Priv)] = {
+                "Name" : "Unknown",
+                "Privileges" : Priv,
+                "Colour" : "danger"
+            }
+        else:
+            info = info[0]
+            PrivilegeDict[str(Priv)] = {}
+            PrivilegeDict[str(Priv)]["Name"] = info[0]
+            PrivilegeDict[str(Priv)]["Privileges"] = Priv
+            PrivilegeDict[str(Priv)]["Colour"] = info[1]
+
+    #Convierting user data into cool dicts
+    #Structure
+    #[
+    #    {
+    #        "Id" : 999,
+    #        "Name" : "james got rejected haha",
+    #        "Privilege" : PrivilegeDict["234543"],
+    #        "Allowed" : True
+    #    }
+    #]
+    Users = []
+    for user in People:
+        Dict = {
+            "Id" : user[0],
+            "Name" : user[1],
+            "Privilege" : PrivilegeDict[str(user[2])]
+        }
+        if user[3] == 1:
+            Dict["Allowed"] = True
+        else:
+            Dict["Allowed"] = False
+        Users.append(Dict)
+    
+    return Users
+
+def GetUser(id):
+    """Gets data for user. (universal)"""
+    mycursor.execute(f"SELECT id, username, pp_std, country FROM users_stats WHERE id = {id} LIMIT 1")
+    User = mycursor.fetchall()[0]
+    return {
+        "Id" : User[0],
+        "Username" : User[1],
+        "pp" : User[2],
+        "IsOnline" : IsOnline(id),
+        "Country" : User[3]
+    }
+
+def UserData(id):
+    """Gets data for user. (specialised for user edit page)"""
+    Data = GetUser(id)
+    mycursor.execute(f"SELECT userpage_content, user_color, username_aka FROM users_stats WHERE id = {id} LIMIT 1")# Req 1
+    Data1 = mycursor.fetchall()[0]
+    mycursor.execute(f"SELECT email, register_datetime, privileges, notes, donor_expire, silence_end, silence_reason FROM users WHERE id = {id} LIMIT 1")
+    Data2 = mycursor.fetchall()[0]
+    #Fetches the IP
+    mycursor.execute(f"SELECT ip FROM ip_user WHERE userid = {id} LIMIT 1")
+    try:
+        Ip = mycursor.fetchall()[0][0]
+    except Exception:
+        Ip = "0.0.0.0"
+    #adds new info to dict
+    #I dont use the discord features from RAP so i didnt include the discord settings but if you complain enough ill add them
+    Data["UserpageContent"] = Data1[0]
+    Data["UserColour"] = Data1[1]
+    Data["Aka"] = Data1[2]
+    Data["Email"] = Data2[0]
+    Data["RegisterTime"] = Data2[1]
+    Data["Privileges"] = Data2[2]
+    Data["Notes"] = Data2[3]
+    Data["DonorExpire"] = Data2[4]
+    Data["SilenceEnd"] = Data[5]
+    Data["SilenceReason"] = Data[6]
+    Data["Avatar"] = UserConfig["AvatarServer"] + str(id)
+    Data["Ip"] = Ip
+    return Data
+
+def RAPFetch(page = 1):
+    """Fetches RAP Logs."""
+    page = int(page) - 1 #makes sure is int and is in ok format
+    Offset = UserConfig["PageSize"] * page
+    mycursor.execute(f"SELECT * FROM rap_logs ORDER BY id DESC LIMIT {UserConfig['PageSize']} OFFSET {Offset}")
+    Data = mycursor.fetchall()
+
+    #Gets list of all users
+    Users = []
+    for dat in Data:
+        if dat[1] not in Users:
+            Users.append(dat[1])
+    #gets all unique users so a ton of lookups arent made
+    UniqueUsers = Unique(Users)
+
+    #now we get basic data for each user
+    UserDict = {}
+    for user in UniqueUsers:
+        UserData = GetUser(user)
+        UserDict[str(user)] = UserData
+    
+    #log structure
+    #[
+    #    {
+    #        "LogId" : 1337,
+    #        "AccountData" : 1000,
+    #        "Text" : "did a thing",
+    #        "Via" : "Shibui Panel",
+    #        "Time" : 18932905234
+    #    }
+    #]
+    LogArray = []
+    for log in Data:
+        #we making it into cool dicts
+        #getting the acc data
+        LogUserData = UserDict[str(log[1])]
+        TheLog = {
+            "LogId" : log[0],
+            "AccountData" : LogUserData,
+            "Text" : log[2],
+            "Time" : TimestampConverter(log[3]),
+            "Via" : log[4]
+        }
+        LogArray.append(TheLog)
+    return LogArray
