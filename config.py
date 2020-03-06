@@ -1,9 +1,9 @@
-#the purpose of this file has changed to be a quick config fetcher
 import json
-from os import path
+from os import path, urandom
 from colorama import init, Fore
+from base64 import b64encode
 init() #Colorama thing
-DefaultConfig = {
+DefaultConfig = { #THESE ARE DEFAULT OPRIONS FOR THE CONFIG.
     "Port" : 1337,
     #SQL Info
     "SQLHost" : "localhost",
@@ -17,16 +17,21 @@ DefaultConfig = {
     #Server Settings
     "ServerName" : "osu!Shibui",
     "ServerURL" : "https://shibui.pw/",
-    "LetsAPI" : "http://127.0.0.1:5002/letsapi",
+    "LetsAPI" : "https://127.0.0.1:5002/letsapi/",
     "AvatarServer" : "https://a.shibui.pw/",
-    "BanchoURL" : "https://c.shibui.pw//",
+    "BanchoURL" : "https://c.shibui.pw/",
     "BeatmapMirror" : "http://storage.kurikku.pw/",
+    "IpLookup" : "http://ip.zxq.co/",
     "HasRelax" : True,
+    "AvatarDir" : "/root/ripple/avatars/avatars/",
     "Webhook" : "", #Discord webhook for posting newly ranked maps
     #Recaptcha v2 for the login page
     "UseRecaptcha" : False,
     "RecaptchaSecret" : "",
-    "RecaptchaSiteKey" : ""
+    "RecaptchaSiteKey" : "",
+    #RealistikPanel Settings
+    "PageSize" : 50, #number of elements per page
+    "SecretKey" : b64encode(urandom(64)).decode('utf-8') #generates random encryption key
 }
 
 class JsonFile:
@@ -51,7 +56,7 @@ UserConfig = JsonFile.GetDict("config.json")
 if UserConfig == {}:
     print(Fore.YELLOW+" No config found! Generating!"+Fore.RESET)
     JsonFile.SaveDict(DefaultConfig, "config.json")
-    print(Fore.WHITE+" Config created! It is named config.json. Edit it accordingly and start Shibui Panel again.")
+    print(Fore.WHITE+" Config created! It is named config.json. Edit it accordingly and start RealistikPanel again!")
     exit()
 else:
     #config check and updater
@@ -70,7 +75,7 @@ else:
         for Key in NeedSet:
             UserConfig[Key] = DefaultConfig[Key]
             print(Fore.BLUE+f" Option {Key} added to config. Set default to '{DefaultConfig[Key]}'." + Fore.RESET)
-        print(Fore.GREEN+" Config updated. Please edit the new values to your liking." + Fore.RESET)
+        print(Fore.GREEN+" Config updated! Please edit the new values to your liking." + Fore.RESET)
         JsonFile.SaveDict(UserConfig, "config.json")
         exit()
         
